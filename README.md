@@ -1,19 +1,29 @@
-# DSSP : Dictionary Secondary Structure Protein
+# DSSP : Dictionary of protein secondary structure
 
 ## Requirements
-Python3
+- Python3
 
 ## Installation
 ```
 git clone https://github.com/kabhel/DSSP_implmt.git
+cd DSSP_implmt
+chmod +x dssp.py
 ```
 
-## Options
-- -i [--input]
-- -o [--output]
+## Help
+```
+$ ./dssp.py -h
+Usage: dssp.py [options]
 
-## Author
-Hélène Kabbech
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i FILE, --input=FILE
+                        The file name of a PDB formatted file containing the
+                        protein structure data.
+  -o FILE, --output=FILE
+                        The  file  name  of  a  DSSP  file to create.
+```
 
 ## Reference
-W. KABSCH AND C.SANDER, BIOPOLYMERS 22 (1983) 2577-2637 
+W. Kabsch and C.Sander, Biopolymers 22 (1983) 2577-2637 
