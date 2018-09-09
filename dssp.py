@@ -46,19 +46,32 @@ def DSSPlines():
 				n = chain[res]['N'].get_vector() 
 				ca = chain[res]['CA'].get_vector() 
 				c = chain[res]['C'].get_vector()
-				#PHI calculation
+				# PHI calculation
 				try:
 					cp = chain[res-1]['C'].get_vector() 
 					line['phi'] = round((calc_dihedral(cp, n, ca, c)*180)/m.pi,1) # degree = (radian*180)/pi
 					
 				except:
 					line['phi'] = 360.0
-				#PSI calculation
+				# PSI calculation
 				try:
 					nn = chain[res+1]['N'].get_vector()
 					line['psi'] = round((calc_dihedral(n, ca, c, nn)*180)/m.pi,1)
 				except:
 					line['psi'] = 360.0
+
+				# ALPHA angle calculation
+				try:
+					cap = chain[res-1]['CA'].get_vector()
+					can = chain[res+1]['CA'].get_vector()
+					cann = chain[res+2]['CA'].get_vector()
+					line['alpha'] = round((calc_dihedral(cap,ca,can,cann)*180)/m.pi,1);
+				except:
+					line['alpha'] = 360.0
+				if (line['alpha'] < 0):
+					chirality = '-';
+				else:
+					chirality = '+';
 				dssp.append(line)
 	return(dssp)
 
@@ -74,9 +87,9 @@ if __name__ == "__main__":
 	pdb = readPDB()
 	makeHeader()
 	dssp = DSSPlines()
-	print(dssp[0])
-	print(dssp[10])
-	print(dssp[-1])
+	
+	for i in range(0,len(dssp)):
+		print("index:{}, alpha:{}, phi:{}, psi:{}".format(dssp[i]['index'],dssp[i]['alpha'],dssp[i]['phi'],dssp[i]['psi']))
 
 	  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN
 
