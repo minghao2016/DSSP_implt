@@ -8,11 +8,8 @@ from Bio.PDB import *
 import numpy as np
 
 def DSSPlines():
-	p = PDBParser()
-	structure = p.get_structure('A',opt.input)
 	dssp = []
-	i = 0
-	nb_chains = 0
+	i,	nb_chains = 0, 0
 	for chain in structure.get_chains():
 		nb_chains += 1
 		start = 9999
@@ -56,7 +53,7 @@ def DSSPlines():
 				cap = chain[res-1]['CA'].get_vector()
 				can = chain[res+1]['CA'].get_vector()
 				cann = chain[res+2]['CA'].get_vector()
-				line['alpha'] = (calc_dihedral(cap,ca,can,cann)*180)/np.pi;
+				line['alpha'] = (calc_dihedral(cap,ca,can,cann)*180)/np.pi
 			except:
 				line['alpha'] = 360
 			if (line['alpha'] < 0):
@@ -85,25 +82,26 @@ def DSSPlines():
 			dssp.append(line)
 	return(dssp)
 
+def lineHeader(dic):
+	l = ""
+	for mol_id,mol_items in dic.items():
+		l += "MOL_ID: " + mol_id + "; "
+		for key, item in mol_items.items():
+			if (item != ""):
+				l += key.upper() + ": " + item.upper() + "; "
+	return(l)
+
 def makeHeader():
 	"""
 	Make and return the header of the dssp output, using data from the pdb file
 	"""
-	with open(opt.input,'r') as f:
-		pdb = f.read()
-
 	header = "==== Secondary Structure Assignment using DSSP method ====\nDATE\t\t{}\n".format(dt.date.today())
 	header += "REFERENCE\tW. KABSCH AND C.SANDER, BIOPOLYMERS 22 (1983) 2577-2637\n"
-	# regex : 
-	header_regex = re.compile("HEADER[ |2-9]{1,}([^\n]*)")
-	compnd_regex = re.compile("COMPND[ |2-9]{1,}([^\n]*)")
-	source_regex = re.compile("SOURCE[ |2-9]{1,}([^\n]*)")
-	author_regex = re.compile("AUTHOR {1,}([^\n]*)")
-	header += "HEADER\t\t{}\n".format(' '.join(map(str.rstrip,header_regex.findall(pdb))))
-	header += "COMPND\t\t{}\n".format(' '.join(map(str.rstrip,compnd_regex.findall(pdb)))) # all COMPND
-	header += "SOURCE\t\t{}\n".format(' '.join(map(str.rstrip,source_regex.findall(pdb)))) # all SOURCE
-	header += "AUTHOR\t\t{}".format(author_regex.findall(pdb)[0].rstrip())
-	return(header)
+	header += "HEADER\t\t{}{:>28}\n".format(structure.header["head"].upper(),structure.header["deposition_date"])
+	header += "COMPND\t\t{}\n".format(lineHeader(structure.header["compound"])) # all COMPND
+	header += "SOURCE\t\t{}\n".format(lineHeader(structure.header["source"])) # all SOURCE
+	header += "AUTHOR\t\t{}".format(structure.header["author"].upper())
+	return(header+"\n")
 
 def displayResults():
 	#	print("  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN")
@@ -111,15 +109,13 @@ def displayResults():
 	descp = "  #  RESIDUE AA    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
 	if (opt.output):
 		with open(opt.output,'w') as filout:
-			filout.write(header+'\n')
-			filout.write(descp+'\n')
+			filout.write(header+descp+'\n')
 			for i in range(0,len(dssp)):
 				l = dssp[i]
 				filout.write("{:>5d}{:>5d}{:>2s}{:>2s}{:>9.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
 					.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
 	else:
-		print(header)
-		print(descp)
+		print(header,descp,sep="")
 		for i in range(0,len(dssp)):
 			l = dssp[i]
 			print("{:>5d}{:>5d}{:>2s}{:>2s}{:>9.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
@@ -134,6 +130,8 @@ if __name__ == "__main__":
 	(opt, args) = parser.parse_args()
 	if not opt.input:
 		parser.error('Input pdb file not given.')
-	
+
+	p = PDBParser()
+	structure = p.get_structure(opt.input,opt.input)
 	dssp = DSSPlines()
 	displayResults()
