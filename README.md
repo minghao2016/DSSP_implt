@@ -45,13 +45,13 @@ Options:
 - **AA :** One letter amino acid code, lower case for SS-bridge CYS.
 - **S (first column in STRUCTURE block) :** Compromise summary of secondary structure, intended to approximate crystallographers' intuition, based on columns 19-38, which are the principal result of DSSP analysis of the atomic coordinates.
 - **BP1 BP2 :** Residue number of first and second bridge partner followed by one letter sheet label
-- **ACC : Number of water molecules in contact with this residue *10. or residue water exposed surface in Angstrom**2.
-- **N-H-->O etc. :** Hydrogen bonds; e.g. -3,-1.4 means: if this residue is residue i then N-H of I is h-bonded to C=O of I-3 with an electrostatic H-bond energy of -1.4 kcal/mol. There are two columns for each type of H-bond, to allow for bifurcated H-bonds.
+- **ACC :** Number of water molecules in contact with this residue *10. or residue water exposed surface in Angstrom**2.
+- **N-H-->O etc. :** Hydrogen bonds; e.g. -3,-1.4 means: if this residue is residue i then N-H of i is h-bonded to C=O of i-3 with an electrostatic H-bond energy of -1.4 kcal/mol. There are two columns for each type of H-bond, to allow for bifurcated H-bonds.
 - **TCO :** Cosine of angle between C=O of residue i and C=O of residue i-1. For alpha-helices, TCO is near +1, for beta-sheets TCO is near -1. Not used for structure definition.
 - **KAPPA :** Virtual bond angle (bend angle) defined by the three C-alpha atoms of residues i-2, i, i+2. Used to define bend (structure code 'S').
 - **ALPHA :** Virtual torsion angle (dihedral angle) defined by the four C-alpha atoms of residues i-1, i, i+1, i+2. Used to define chirality (structure code '+' or '-').
 - **PHI PSI :** IUPAC peptide backbone torsion angles
-- X-CA Y-CA Z-CA : C-alpha atom coordinates
+- **X-CA Y-CA Z-CA :** C-alpha atom coordinates
 
 ## Reference
 W. Kabsch and C.Sander, Biopolymers 22 (1983) 2577-2637 
