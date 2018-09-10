@@ -1,13 +1,22 @@
-# DSSP : Dictionary of protein secondary structure
+![Python version](https://img.shields.io/badge/python-3.6-brightgreen.svg)
+
+# Secondary Structure Assignment using DSSP method
 
 ## Requirements
-- Python3
+- Python 3.6
+- Packages : math, re, optparse, Bio.SeqUtils, Bio.PDBmath, datetime
 
 ## Installation
 ```
 git clone https://github.com/kabhel/DSSP_implmt.git
 cd DSSP_implmt
 chmod +x dssp.py
+```
+
+## Examples
+```
+./dssp.py -i data/1bta.pdb
+./dssp.py -i data/1pnk.pdb
 ```
 
 ## Help
