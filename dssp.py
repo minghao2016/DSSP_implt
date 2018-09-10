@@ -40,23 +40,23 @@ def DSSPlines():
 				line['chain'] = chain.id
 				line['index'] = res
 				line['aa'] = seq1(chain[res].get_resname())
-				line['x-ca'] = round(chain[res]['CA'].get_coord()[0],1)
-				line['y-ca'] = round(chain[res]['CA'].get_coord()[1],1)
-				line['z-ca'] = round(chain[res]['CA'].get_coord()[2],1)
+				line['x-ca'] = chain[res]['CA'].get_coord()[0]
+				line['y-ca'] = chain[res]['CA'].get_coord()[1]
+				line['z-ca'] = chain[res]['CA'].get_coord()[2]
 				n = chain[res]['N'].get_vector() 
 				ca = chain[res]['CA'].get_vector() 
 				c = chain[res]['C'].get_vector()
 				# PHI calculation
 				try:
 					cp = chain[res-1]['C'].get_vector() 
-					line['phi'] = round((calc_dihedral(cp, n, ca, c)*180)/m.pi,1) # degree = (radian*180)/pi
+					line['phi'] = (calc_dihedral(cp, n, ca, c)*180)/m.pi # degree = (radian*180)/pi
 					
 				except:
 					line['phi'] = 360.0
 				# PSI calculation
 				try:
 					nn = chain[res+1]['N'].get_vector()
-					line['psi'] = round((calc_dihedral(n, ca, c, nn)*180)/m.pi,1)
+					line['psi'] = (calc_dihedral(n, ca, c, nn)*180)/m.pi
 				except:
 					line['psi'] = 360.0
 
@@ -65,13 +65,21 @@ def DSSPlines():
 					cap = chain[res-1]['CA'].get_vector()
 					can = chain[res+1]['CA'].get_vector()
 					cann = chain[res+2]['CA'].get_vector()
-					line['alpha'] = round((calc_dihedral(cap,ca,can,cann)*180)/m.pi,1);
+					line['alpha'] = (calc_dihedral(cap,ca,can,cann)*180)/m.pi;
 				except:
 					line['alpha'] = 360.0
 				if (line['alpha'] < 0):
 					chirality = '-';
 				else:
 					chirality = '+';
+
+				# KAPPA angle
+				try:
+					capp = chain[res-2]['CA'].get_vector()
+					cann = chain[res+2]['CA'].get_vector()
+					line['kappa'] = 0.0
+				except:
+					line['kappa'] = 360.0
 				dssp.append(line)
 	return(dssp)
 
@@ -85,11 +93,15 @@ if __name__ == "__main__":
 	if not opt.input:
 		parser.error('Input pdb file not given.')
 	pdb = readPDB()
-	makeHeader()
+	print(makeHeader())
 	dssp = DSSPlines()
+
+#	print("  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN")
+	print("  #  RESIDUE AA KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA")
 	
 	for i in range(0,len(dssp)):
-		print("index:{}, alpha:{}, phi:{}, psi:{}".format(dssp[i]['index'],dssp[i]['alpha'],dssp[i]['phi'],dssp[i]['psi']))
+		l = dssp[i]
+		print("{:>5d}{:>5d}{:>2s}{:>2s}{:>7.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}".format(l['index'],l['index'],l['chain'],l['aa'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
 
-	  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN
+	
 
