@@ -1,4 +1,4 @@
-#!/usr/bin/python3.6
+#!/home/helene/anaconda3/bin/python3.6
 
 from optparse import OptionParser
 import datetime as dt
@@ -7,15 +7,13 @@ from Bio.SeqUtils import seq1
 from Bio.PDB import *
 import math as m
 
-def readPDB():
-	with open(opt.input,'r') as f:
-		pdb = f.read()
-	return(pdb)
-
 def makeHeader():
 	"""
 	Make and return the header of the dssp output, using data from the pdb file
 	"""
+	with open(opt.input,'r') as f:
+		pdb = f.read()
+
 	header = "==== Secondary Structure Assignment using DSSP method ====\nDATE\t\t{}\n".format(dt.date.today())
 	header += "REFERENCE\tW. KABSCH AND C.SANDER, BIOPOLYMERS 22 (1983) 2577-2637\n"
 	# regex : 
@@ -33,54 +31,64 @@ def DSSPlines():
 	p = PDBParser()
 	structure = p.get_structure('A',opt.input)
 	dssp = []
-	for model in structure:
-		for chain in model:
-			for res in range(1,len(chain)+1):
-				line = {}
-				line['chain'] = chain.id
-				line['index'] = res
-				line['aa'] = seq1(chain[res].get_resname())
-				line['x-ca'] = chain[res]['CA'].get_coord()[0]
-				line['y-ca'] = chain[res]['CA'].get_coord()[1]
-				line['z-ca'] = chain[res]['CA'].get_coord()[2]
-				n = chain[res]['N'].get_vector() 
-				ca = chain[res]['CA'].get_vector() 
-				c = chain[res]['C'].get_vector()
-				# PHI calculation
-				try:
-					cp = chain[res-1]['C'].get_vector() 
-					line['phi'] = (calc_dihedral(cp, n, ca, c)*180)/m.pi # degree = (radian*180)/pi
-					
-				except:
-					line['phi'] = 360.0
-				# PSI calculation
-				try:
-					nn = chain[res+1]['N'].get_vector()
-					line['psi'] = (calc_dihedral(n, ca, c, nn)*180)/m.pi
-				except:
-					line['psi'] = 360.0
+	i = 0
+	for chain in structure.get_chains():
+		start = 9999
+		start = next(res.id[1] for res in chain.get_residues() if (res.id[1] < start))
+		#end = next(res.id[1] for res in chain.get_residues() if (res.id[0] == 'W'))
+		for res in chain.get_residues():
+			if (res.get_id()[0] == 'W'):
+				break
+			end = res.get_id()[1]
 
-				# ALPHA angle calculation
-				try:
-					cap = chain[res-1]['CA'].get_vector()
-					can = chain[res+1]['CA'].get_vector()
-					cann = chain[res+2]['CA'].get_vector()
-					line['alpha'] = (calc_dihedral(cap,ca,can,cann)*180)/m.pi;
-				except:
-					line['alpha'] = 360.0
-				if (line['alpha'] < 0):
-					chirality = '-';
-				else:
-					chirality = '+';
+		for res in range(start,end):
+			i += 1
+			line = {}
+			line['index'] = i
+			line['res_nb'] = res
+			line['aa'] = seq1(chain[res].get_resname())
+			line['chain'] = chain.id
+			line['x-ca'] = chain[res]['CA'].get_coord()[0]
+			line['y-ca'] = chain[res]['CA'].get_coord()[1]
+			line['z-ca'] = chain[res]['CA'].get_coord()[2]
+			n = chain[res]['N'].get_vector() 
+			ca = chain[res]['CA'].get_vector() 
+			c = chain[res]['C'].get_vector()
+			# PHI calculation
+			try:
+				cp = chain[res-1]['C'].get_vector() 
+				line['phi'] = (calc_dihedral(cp, n, ca, c)*180)/m.pi # degree = (radian*180)/pi
+				
+			except:
+				line['phi'] = 360.0
+			# PSI calculation
+			try:
+				nn = chain[res+1]['N'].get_vector()
+				line['psi'] = (calc_dihedral(n, ca, c, nn)*180)/m.pi
+			except:
+				line['psi'] = 360.0
 
-				# KAPPA angle
-				try:
-					capp = chain[res-2]['CA'].get_vector()
-					cann = chain[res+2]['CA'].get_vector()
-					line['kappa'] = 0.0
-				except:
-					line['kappa'] = 360.0
-				dssp.append(line)
+			# ALPHA angle calculation
+			try:
+				cap = chain[res-1]['CA'].get_vector()
+				can = chain[res+1]['CA'].get_vector()
+				cann = chain[res+2]['CA'].get_vector()
+				line['alpha'] = (calc_dihedral(cap,ca,can,cann)*180)/m.pi;
+			except:
+				line['alpha'] = 360.0
+			if (line['alpha'] < 0):
+				chirality = '-';
+			else:
+				chirality = '+';
+
+			# KAPPA angle
+			try:
+				capp = chain[res-2]['CA'].get_vector()
+				cann = chain[res+2]['CA'].get_vector()
+				line['kappa'] = 0.0
+			except:
+				line['kappa'] = 360.0
+			dssp.append(line)
 	return(dssp)
 
 if __name__ == "__main__":
@@ -92,7 +100,6 @@ if __name__ == "__main__":
 	(opt, args) = parser.parse_args()
 	if not opt.input:
 		parser.error('Input pdb file not given.')
-	pdb = readPDB()
 	print(makeHeader())
 	dssp = DSSPlines()
 
@@ -101,7 +108,8 @@ if __name__ == "__main__":
 	
 	for i in range(0,len(dssp)):
 		l = dssp[i]
-		print("{:>5d}{:>5d}{:>2s}{:>2s}{:>7.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}".format(l['index'],l['index'],l['chain'],l['aa'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+		print("{:>5d}{:>5d}{:>2s}{:>2s}{:>7.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
+			.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
 
 	
 
