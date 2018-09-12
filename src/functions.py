@@ -2,6 +2,20 @@ from optparse import OptionParser
 from subprocess import call
 import datetime as dt
 
+################# FIXED VARIABLES #################
+
+# For the calculation of the electrostatic
+# interaction energy between two H-bonding groups
+Q1, Q2 = 0.41, 0.20 # partial charges
+F = 332 # factor
+
+# Patterns
+NONE = ' '
+START = '>'
+END = '<'
+START_END = 'X'
+###################################################
+
 def argsParsing():
 	"""
 	Automatic creation of the help and parsing of arguments
@@ -52,8 +66,7 @@ def makeHeader(structure):
 def displayResults(opt,structure,dssp):
 	#	print("  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN")
 	header = makeHeader(structure)
-	#descp = "  #  RESIDUE AA    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
-	descp = "  #  RESIDUE AA STRUCTURE"
+	descp = "  #  RESIDUE AA STRUCTURE    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
 	if (opt.output):
 		with open(opt.output,'w') as filout:
 			filout.write(header+descp+'\n')
@@ -65,7 +78,38 @@ def displayResults(opt,structure,dssp):
 		print(header,descp,sep="")
 		for i in range(0,len(dssp)):
 			l = dssp[i]
-			print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}"\
-				.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turns'],l['4-turns'],l['5-turns']))	
-			#print("{:>5d}{:>5d}{:>2s}{:>2s}{:>9.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
-			#	.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+			#print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}"\
+			#	.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turns'],l['4-turns'],l['5-turns']))	
+			print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}{:>2s}{:>9.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
+				.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turns'],l['4-turns'],l['5-turns'],\
+					l['chirality'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+
+def testHbond(chain,res,n):
+	"""
+	Test if there is an H-bond between two a residue i
+	and a residue i+n (n = [3,4,5])
+	"""
+	try:
+		# Residue i
+		O = chain[res]['O'] # Oxygen
+		C = chain[res]['C'] # Carbon
+		# Residue i+n
+		Nn = chain[res+n]['N'] # Azote
+		Hn = chain[res+n]['H'] # Hydrogen
+
+		# r(ABn) = Interatomic distance from atom A (residue i) to B (residue i+n)
+		rONn = Nn - O
+		rCHn = Hn - C
+		rOHn = Hn - O
+		rCNn = Nn - C
+
+		# Electrostatic interaction energy between two H-bonding groups.
+		# E in kcal/mol
+		E = Q1 * Q2 * (1/rONn + 1/rCHn - 1/rOHn - 1/rCNn) * F
+		if (E < -0.5):
+			return(True)
+		else:
+			return(False)
+	except:
+		# There is no residue i+n
+		return(False)
