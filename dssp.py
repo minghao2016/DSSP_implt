@@ -1,29 +1,18 @@
 #!/home/helene/anaconda3/bin/python3.6
 
+import sys
+import os
+# Implemented modules in /src foler :
+sys.path.append(os.path.abspath('src'))
+from calculation import *
+from structure import *
+from additional_functions import *
+
+# Biopython
 from Bio.SeqUtils import seq1
 from Bio.PDB import *
 
-import sys
-import os
-srcPath = 'src'
-sys.path.append(os.path.abspath(srcPath))
-
-from functions import *
-from calc import *
-
-################# FIXED VARIABLES #################
-
-# For the calculation of the electrostatic
-# interaction energy between two H-bonding groups
-Q1, Q2 = 0.41, 0.20 # partial charges
-F = 332 # factor
-
-# Patterns
 NONE = ' '
-START = '>'
-END = '<'
-START_END = 'X'
-###################################################
 
 def residueDesc():
 	"""
@@ -44,45 +33,25 @@ def residueDesc():
 	l['chirality'] = chirality(l['alpha'])
 	l['psi'] = psiCalc(chain,res,N,CA,C)
 	l['phi'] = phiCalc(chain,res,N,CA,C)
-
-def nTurnPattern():
 	for n in range(3,6):
-		if (testHbond(chain,res-1,n) == True):
-			l[str(n)+'-turns'] = START
-		else:
-			l[str(n)+'-turns'] = NONE
-
-def startHelixPattern():
-	for n in range(3,6):
-		if (isHelix(n) == True):
-			l[str(n)+'-turns'] = START
-			try:
-				if (dssp[res-1][str(n)+'-turns'] == NONE):
-					dssp[res-1][str(n)+'-turns'] = START
-			except:
-				print(' ',end='')
-		else:
-			l[str(n)+'-turns'] = NONE
-
-def isHelix(n):
-	try:
-		if (testHbond(chain,res-1,n) == True and testHbond(chain,res,n) == True):
-			return(True)
-		return(False)
-	except:
-		return(False)
+		l[str(n)+'-hbonds'] = testHbond(chain,res,n)
+		l[str(n)+'-turns'] = {}
+		l[str(n)+'-turns']['start'] = NONE
+		l[str(n)+'-turns']['middle'] = NONE
+		l[str(n)+'-turns']['end'] = NONE
+		l[str(n)+'-turns']['res'] = NONE
 
 if __name__ == "__main__":
 	opt = argsParsing()
 	hydrAddition(opt)
 
 	p = PDBParser()
-	structure = p.get_structure(opt.input,opt.input+".H")
+	pdb = p.get_structure(opt.input,opt.input+".H")
 
 	dssp = []
 	index,	nb_chains = 0, 0
 
-	for chain in structure.get_chains():
+	for chain in pdb.get_chains():
 		nb_chains += 1
 		# first residue id number of the current chain 
 		first = next(res.id[1] for res in chain.get_residues() if (res.id[1] < 99999))
@@ -94,54 +63,24 @@ if __name__ == "__main__":
 
 		for res in range(first,last):
 			index += 1
+			l = {}
 
 			N = chain[res]['N'].get_vector() 
 			CA = chain[res]['CA'].get_vector() 
 			C = chain[res]['C'].get_vector()
 			O = chain[res]['O'].get_vector()
-
-			l = {}
+			
 			residueDesc()
-
-			startHelixPattern()
-
 			dssp.append(l)
-	displayResults(opt,structure,dssp)
 
-
-	for n in range(3,6):
-		for i in range(0,len(dssp)-4):
-			if (dssp[i-4][str(n)+'-turns'] == '>' or dssp[i-4][str(n)+'-turns'] == 'X'):
-				if (dssp[i][str(n)+'-turns'] == '>'):
-					dssp[i][str(n)+'-turns'] = 'X'
-			#elif (dssp[i-4][str(n)+'-turns'] == '>' or dssp[i-4][str(n)+'-turns'] == 'X'):
-
+	dssp = nTurnPatterns(dssp)
+	displayResults(opt,pdb,dssp)
 	
-"""
-	for i in range(0,len(dssp)-4):
-		if (dssp[i-4]['4-turns'] == '>' or dssp[i-4]['4-turns'] == 'X'):
-			if (dssp[i]['4-turns'] == '>'):
-				dssp[i]['4-turns'] = 'X'
-			elif  (dssp[i]['4-turns'] == ' '):
-				for j in range(i,i+4):
-					dssp[j]['4-turns'] = '<'
-			
-			
-
-
-	displayResults(opt,structure,dssp)
-"""
-'''
-	for i in range(0,len(dssp)-4):
-		if ((dssp[i]['4-turns'] == '>' or dssp[i]['4-turns'] == 'X') and \
-		((dssp[i+1]['4-turns'] == '>' or dssp[i+1]['4-turns'] == 'X') or (dssp[i-1]['4-turns'] == '>' or dssp[i-1]['4-turns'] == 'X'))):
-			if (dssp[i-4]['4-turns'] == '>' or dssp[i-4]['4-turns'] == 'X'):
-				dssp[i]['4-turns'] = 'X'
-			if (dssp[i+2]['4-turns'] == ' ' and dssp[i+3]['4-turns'] == ' ' and dssp[i+4]['4-turns'] == ' ' and dssp[i+5]['4-turns'] == ' '):
-				dssp[i+2]['4-turns'] = '<'
-				dssp[i+3]['4-turns'] = '<'
-				dssp[i+4]['4-turns'] = '<'
-				dssp[i+5]['4-turns'] = '<'
-'''
-	
+	"""
+	for i in range(0,len(dssp)):
+		l = dssp[i]
+		print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}{:>2s}"\
+		.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['4-turns']['res'],l['4-turns']['start'],l['4-turns']['middle'],l['4-turns']['end'],\
+		l['chirality']))
+	"""
 	
