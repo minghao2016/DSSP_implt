@@ -13,6 +13,15 @@ from Bio.SeqUtils import seq1
 from Bio.PDB import *
 
 NONE = ' '
+HELIX_STRUC = {'3':'G','4':'H','5':'I'}
+HELICES = [5,4,3]
+
+NONE = ' '
+START = '>'
+END = '<'
+MIDDLE = {'3':'3','4':'4','5':'5'}
+START_END = 'X'
+
 
 def residueDesc():
 	"""
@@ -33,13 +42,9 @@ def residueDesc():
 	l['chirality'] = chirality(l['alpha'])
 	l['psi'] = psiCalc(chain,res,N,CA,C)
 	l['phi'] = phiCalc(chain,res,N,CA,C)
-	for n in range(3,6):
+	for n in HELICES:
 		l[str(n)+'-hbonds'] = testHbond(chain,res,n)
-		l[str(n)+'-turns'] = {}
-		l[str(n)+'-turns']['start'] = NONE
-		l[str(n)+'-turns']['middle'] = NONE
-		l[str(n)+'-turns']['end'] = NONE
-		l[str(n)+'-turns']['res'] = NONE
+		l[str(n)+'-turns'] = {'start':NONE,'middle':NONE,'end':NONE,'rlt':NONE}
 
 if __name__ == "__main__":
 	opt = argsParsing()
@@ -74,13 +79,15 @@ if __name__ == "__main__":
 			dssp.append(l)
 
 	dssp = nTurnPatterns(dssp)
+	dssp = setStructure(dssp)
+
 	displayResults(opt,pdb,dssp)
 	
 	"""
 	for i in range(0,len(dssp)):
 		l = dssp[i]
 		print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}{:>2s}"\
-		.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['4-turns']['res'],l['4-turns']['start'],l['4-turns']['middle'],l['4-turns']['end'],\
+		.format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['4-turns']['rlt'],l['4-turns']['start'],l['4-turns']['middle'],l['4-turns']['end'],\
 		l['chirality']))
 	"""
 	

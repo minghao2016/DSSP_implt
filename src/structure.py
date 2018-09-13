@@ -1,5 +1,13 @@
 # helix structural patterns
 HELIX_STRUC = {'3':'G','4':'H','5':'I'}
+HELICES = [5,4,3]
+
+# n-turn patterns
+NONE = ' '
+START = '>'
+END = '<'
+MIDDLE = {'3':'3','4':'4','5':'5'}
+START_END = 'X'
 
 def isHelix(dssp,res,n):
 	"""
@@ -20,15 +28,9 @@ def nTurnPatterns(dssp):
 	5-helix : >>555<<
 	"""
 
-	# n-turn patterns
-	NONE = ' '
-	START = '>'
-	END = '<'
-	MIDDLE = {'3':'3','4':'4','5':'5'}
-	START_END = 'X'
-
 	for res in range(len(dssp)):
-		for n in range(3,6):
+		# n-Helix, with n = [3,4,5]
+		for n in HELICES:
 			if (isHelix(dssp,res,n)):
 				for i in range(0,2):
 					# helix start : res(i):'>' & res(i+1):'>'
@@ -42,16 +44,26 @@ def nTurnPatterns(dssp):
 			if (dssp[res][str(n)+'-turns']['end'] == END):
 				if (dssp[res][str(n)+'-turns']['start'] == START):
 					# '>' + '[3,4,5]' + '<' = 'X' (start & end)
-					dssp[res][str(n)+'-turns']['res'] = START_END
+					dssp[res][str(n)+'-turns']['rlt'] = START_END
 				else:
 					# ' ' + '<' = '<' (end)
-					dssp[res][str(n)+'-turns']['res'] = END
+					dssp[res][str(n)+'-turns']['rlt'] = END
 			else:
 				if (dssp[res][str(n)+'-turns']['start'] == START):
 					# '>' + ' ' = '>' (start)
-					dssp[res][str(n)+'-turns']['res'] = START
+					dssp[res][str(n)+'-turns']['rlt'] = START
 				else:
 					if (dssp[res][str(n)+'-turns']['middle'] != NONE):
 						# (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
-						dssp[res][str(n)+'-turns']['res'] = MIDDLE[str(n)]
+						dssp[res][str(n)+'-turns']['rlt'] = MIDDLE[str(n)]
+	return(dssp)
+
+def setStructure(dssp):
+	for n in HELICES:
+		for res in range(len(dssp)):
+			if (dssp[res][str(n)+'-turns']['rlt'] == START):
+				while (dssp[res+2][str(n)+'-turns']['rlt'] != NONE):
+					res += 1
+					if (dssp[res]['structure'] == NONE):
+						dssp[res]['structure'] = HELIX_STRUC[str(n)]
 	return(dssp)
