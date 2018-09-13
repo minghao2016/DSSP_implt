@@ -1,13 +1,15 @@
 #!/home/helene/anaconda3/bin/python3.6
 
-import sys
-import os
 from Bio.SeqUtils import seq1
 from Bio.PDB import *
-import numpy as np
+
+import sys
+import os
 srcPath = 'src'
 sys.path.append(os.path.abspath(srcPath))
+
 from functions import *
+from calc import *
 
 ################# FIXED VARIABLES #################
 
@@ -39,77 +41,30 @@ def residueDesc():
 
 def nTurnPattern():
 	for n in range(3,6):
-		if (testHbond(chain,res,n) == True):
+		if (testHbond(chain,res-1,n) == True):
 			l[str(n)+'-turns'] = START
 		else:
 			l[str(n)+'-turns'] = NONE
 
-def TCOCalc():
-	"""
-	TCO calculation
-	"""	
-	try:
-		Cp = chain[res-1]['C'].get_vector()
-		Op = chain[res-1]['O'].get_vector()
-		p1 = C - O
-		p2 = Cp - Op
-		x = np.dot(p1,p1) * np.dot(p2,p2)
-		if(x > 0):
-			l['tco'] = np.dot(p1,p2) / np.sqrt(x)
-	except:
-		l['tco'] = 0
+def startHelixPattern():
+	for n in range(3,6):
+		if (isHelix(n) == True):
+			l[str(n)+'-turns'] = START
+			try:
+				if (dssp[res-1][str(n)+'-turns'] == NONE):
+					dssp[res-1][str(n)+'-turns'] = START
+			except:
+				print('no')
+		else:
+			l[str(n)+'-turns'] = NONE
 
-def kappaCalc():
-	"""
-	Kappa calculation
-	"""	
+def isHelix(n):
 	try:
-		CApp = chain[res-2]['CA'].get_vector()
-		CAnn = chain[res+2]['CA'].get_vector()
-		l['kappa'] = 0.0
+		if (testHbond(chain,res-1,n) == True and testHbond(chain,res,n) == True):
+			return(True)
+		return(False)
 	except:
-		l['kappa'] = 360
-			#TCO
-
-def alphaCalc():
-	"""
-	Alpha calculation (dihedral angle)
-	"""
-	try:
-		CAp = chain[res-1]['CA'].get_vector()
-		CAn = chain[res+1]['CA'].get_vector()
-		CAnn = chain[res+2]['CA'].get_vector()
-		l['alpha'] = (calc_dihedral(CAp,CA,CAn,CAnn)*180)/np.pi
-	except:
-		l['alpha'] = 360
-
-	if (l['alpha'] < 0):
-		l['chirality'] = '-'
-	elif (l['alpha'] > 0 and l['alpha'] != 360):
-		l['chirality'] = '+'
-	else:
-		l['chirality'] = ' '
-
-def psiCalc():
-	"""
-	Phi calculation (dihedral angle)
-	"""
-	try:
-		Nn = chain[res+1]['N'].get_vector()
-		l['psi'] = (calc_dihedral(N, CA, C, Nn)*180)/np.pi
-	except:
-		l['psi'] = 360
-
-def phiCalc():
-	"""
-	Phi calculation (dihedral angle)
-	"""
-	try:
-		Cp = chain[res-1]['C'].get_vector() 
-		l['phi'] = (calc_dihedral(Cp, N, CA, C)*180)/np.pi # degree = (radian*180)/pi
-		
-	except:
-		l['phi'] = 360
+		return(False)
 
 if __name__ == "__main__":
 	opt = argsParsing()
@@ -141,15 +96,43 @@ if __name__ == "__main__":
 			C = chain[res]['C'].get_vector()
 			O = chain[res]['O'].get_vector()
 
-			nTurnPattern()
-			TCOCalc()
-			kappaCalc()
-			alphaCalc()
-			psiCalc()
-			phiCalc()
+
+			startHelixPattern()
+
+			l['tco'] = TCOCalc(chain,res)
+			l['kappa'] = kappaCalc(chain,res)
+			l['alpha'] = alphaCalc(chain,res)
+			l['chirality'] = chirality(l['alpha'])
+			l['psi'] = psiCalc(chain,res)
+			l['phi'] = phiCalc(chain,res)
 
 			dssp.append(l)
+	displayResults(opt,structure,dssp)
 
+
+	for n in range(3,6):
+		for i in range(0,len(dssp)-4):
+			if (dssp[i-4][str(n)+'-turns'] == '>' or dssp[i-4][str(n)+'-turns'] == 'X'):
+				if (dssp[i][str(n)+'-turns'] == '>'):
+					dssp[i][str(n)+'-turns'] = 'X'
+			#elif (dssp[i-4][str(n)+'-turns'] == '>' or dssp[i-4][str(n)+'-turns'] == 'X'):
+
+	
+"""
+	for i in range(0,len(dssp)-4):
+		if (dssp[i-4]['4-turns'] == '>' or dssp[i-4]['4-turns'] == 'X'):
+			if (dssp[i]['4-turns'] == '>'):
+				dssp[i]['4-turns'] = 'X'
+			elif  (dssp[i]['4-turns'] == ' '):
+				for j in range(i,i+4):
+					dssp[j]['4-turns'] = '<'
+			
+			
+
+
+	displayResults(opt,structure,dssp)
+"""
+'''
 	for i in range(0,len(dssp)-4):
 		if ((dssp[i]['4-turns'] == '>' or dssp[i]['4-turns'] == 'X') and \
 		((dssp[i+1]['4-turns'] == '>' or dssp[i+1]['4-turns'] == 'X') or (dssp[i-1]['4-turns'] == '>' or dssp[i-1]['4-turns'] == 'X'))):
@@ -160,5 +143,6 @@ if __name__ == "__main__":
 				dssp[i+3]['4-turns'] = '<'
 				dssp[i+4]['4-turns'] = '<'
 				dssp[i+5]['4-turns'] = '<'
+'''
 	
-	displayResults(opt,structure,dssp)
+	
