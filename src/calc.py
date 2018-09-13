@@ -1,6 +1,8 @@
 import numpy as np
+from Bio.PDB import *
 
-def TCOCalc(chain,res):
+
+def TCOCalc(chain,res,C,O):
 	"""
 	TCO calculation
 	"""	
@@ -29,7 +31,7 @@ def kappaCalc(chain,res):
 			#TCO
 	return(kappa)
 
-def alphaCalc(chain,res):
+def alphaCalc(chain,res,CA):
 	"""
 	Alpha calculation (dihedral angle)
 	"""
@@ -54,7 +56,7 @@ def chirality(alpha):
 		chirality= ' '
 	return(chirality)
 
-def psiCalc(chain,res):
+def psiCalc(chain,res,N,CA,C):
 	"""
 	Phi calculation (dihedral angle)
 	"""
@@ -65,7 +67,7 @@ def psiCalc(chain,res):
 		psi = 360
 	return(psi)
 
-def phiCalc(chain,res):
+def phiCalc(chain,res,N,CA,C):
 	"""
 	Phi calculation (dihedral angle)
 	"""

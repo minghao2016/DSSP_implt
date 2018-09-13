@@ -38,6 +38,12 @@ def residueDesc():
 	l['x-ca'] = chain[res]['CA'].get_coord()[0]
 	l['y-ca'] = chain[res]['CA'].get_coord()[1]
 	l['z-ca'] = chain[res]['CA'].get_coord()[2]
+	l['tco'] = TCOCalc(chain,res,C,O)
+	l['kappa'] = kappaCalc(chain,res)
+	l['alpha'] = alphaCalc(chain,res,CA)
+	l['chirality'] = chirality(l['alpha'])
+	l['psi'] = psiCalc(chain,res,N,CA,C)
+	l['phi'] = phiCalc(chain,res,N,CA,C)
 
 def nTurnPattern():
 	for n in range(3,6):
@@ -54,7 +60,7 @@ def startHelixPattern():
 				if (dssp[res-1][str(n)+'-turns'] == NONE):
 					dssp[res-1][str(n)+'-turns'] = START
 			except:
-				print('no')
+				print(' ',end='')
 		else:
 			l[str(n)+'-turns'] = NONE
 
@@ -88,23 +94,16 @@ if __name__ == "__main__":
 
 		for res in range(first,last):
 			index += 1
-			l = {}
-			residueDesc()
 
 			N = chain[res]['N'].get_vector() 
 			CA = chain[res]['CA'].get_vector() 
 			C = chain[res]['C'].get_vector()
 			O = chain[res]['O'].get_vector()
 
+			l = {}
+			residueDesc()
 
 			startHelixPattern()
-
-			l['tco'] = TCOCalc(chain,res)
-			l['kappa'] = kappaCalc(chain,res)
-			l['alpha'] = alphaCalc(chain,res)
-			l['chirality'] = chirality(l['alpha'])
-			l['psi'] = psiCalc(chain,res)
-			l['phi'] = phiCalc(chain,res)
 
 			dssp.append(l)
 	displayResults(opt,structure,dssp)
