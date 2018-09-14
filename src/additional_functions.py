@@ -79,20 +79,22 @@ def makeHeader(pdb):
 def displayResults(opt,pdb,dssp):
     #    print("  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN")
     header = makeHeader(pdb)
-    descp = "  #  RESIDUE AA STRUCTURE    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
+    descp = "  #  RESIDUE AA STRUCTURE BP1 BP2    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
     if (opt.output):
         with open(opt.output,'w') as filout:
             filout.write(header+descp+'\n')
             for i in range(0,len(dssp)):
                 l = dssp[i]
-                filout.write("{:>5d}{:>5d}{:>2s}{:>2s}{:>9.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
-                    .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+                filout.write("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:1s}{:1s}{:1s}{:1s}{:1s}{:>4d}{:>4d}{:>8.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
+                .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn']['rlt'],l['4-turn']['rlt'],l['5-turn']['rlt'],l['bend'],\
+                    l['chirality'],l['bridge']['pi'],l['bridge']['pj'],l['BP1'],l['BP2'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+
     else:
         print(header,descp,sep="")
-        for i in range(0,len(dssp)):
+        for i in range(len(dssp)):
             l = dssp[i]
             #print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}"\
-            #    .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turns'],l['4-turns'],l['5-turns']))
-            print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}{:>3s}{:1s}{:1s}{:>8.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
-                .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turns']['rlt'],l['4-turns']['rlt'],l['5-turns']['rlt'],\
-                    l['chirality'],l['bridge']['i'],l['bridge']['j'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+            #    .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn'],l['4-turn'],l['5-turn']))
+            print("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:1s}{:1s}{:1s}{:1s}{:1s}{:1s}{:>4d}{:>4d}{:>8.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
+                .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn']['rlt'],l['4-turn']['rlt'],l['5-turn']['rlt'],l['bend'],\
+                    l['chirality'],l['bridge']['pi'],l['bridge']['pj'],l['BP1'],l['BP2'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
