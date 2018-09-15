@@ -5,8 +5,7 @@ __author__ = "Hélène Kabbech"
 import sys
 import os
 
-# Biopython modules used :
-from Bio.SeqUtils import seq1
+# Biopython :
 from Bio.PDB import *
 
 # Implemented modules in /src foler :

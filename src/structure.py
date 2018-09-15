@@ -4,25 +4,26 @@ Documentation for this module.
 More details.
 """
 
+################ VARIABLES ################
 NONE = ' '
 
-# n-turn patterns
+# n-turn patterns:
 START = '>'
 END = '<'
 START_END = 'X'
 MIDDLE = { 3: '3', 4: '4', 5: '5' }
 
-# Structural patterns
+# Secondary structural patterns :
 HELIX = { 3: 'G', 4: 'H', 5: 'I' }
 STRAND = 'E'
 
-
-
-
+# Alphabet :
 ABC_LOWER, ABC_UPPER = [], []
 for letter in range(65,91):
     ABC_UPPER.append(chr(letter))
     ABC_LOWER.append(chr(letter+32))
+
+##########################################
 
 def testHbond(ri,rj):
     """Test if there is an H-bond between residue i and j. Return a boolean."""
@@ -46,10 +47,10 @@ def testHbond(ri,rj):
         # There is no residue i+n
         return(False)
 
-def isHelix(dssp,res,n):
+def isHelix(dssp,i,n):
     """n-helix(i,i+n-1) = [n-turn(i-1) and n-turn(i)]"""
     try:
-        if (testHbond(dssp[res],dssp[res+n]) == True and testHbond(dssp[res+1],dssp[res+1+n]) == True):
+        if (testHbond(dssp[i],dssp[i+n]) == True and testHbond(dssp[i+1],dssp[i+1+n]) == True):
             return(True)
         return(False)
     except:
@@ -105,19 +106,19 @@ def foundHelices(dssp):
     setHelicesStructure(dssp)
     return(dssp)
 
-def isParallelBridge(i,j):
+def isParallelBridge(dssp,i,j):
     try:
-        if ((testHbond(i-1,j) == True and testHbond(j,i+1) == True)\
-        or (testHbond(j-1,i) == True and testHbond(i,j+1) == True)):
+        if ((testHbond(dssp[i-1],dssp[j]) == True and testHbond(dssp[j],dssp[i+1]) == True)\
+        or (testHbond(dssp[j-1],dssp[i]) == True and testHbond(dssp[i],dssp[j+1]) == True)):
             return(True)
         return(False)
     except:
         return(False)
 
-def isAntiparallelBridge(i,j):
+def isAntiparallelBridge(dssp,i,j):
     try:
-        if ((testHbond(i,j) == True and testHbond(j,i) == True)\
-        or (testHbond(i-1,j+1) == True and testHbond(j-1,i+1) == True)):
+        if ((testHbond(dssp[i],dssp[j]) == True and testHbond(dssp[j],dssp[i]) == True)\
+        or (testHbond(dssp[i-1],dssp[j+1]) == True and testHbond(dssp[j-1],dssp[i+1]) == True)):
             return(True)
         return(False)
     except:
@@ -138,26 +139,26 @@ def foundStrands(dssp):
         if (dssp[res_i].structure != NONE):
             continue
         for res_j in range(res_i+2,len(dssp)+1):
-            if (isParallelBridge(res_i,res_j) == True):
+            if (isParallelBridge(dssp,res_i,res_j) == True):
                 #dssp[res_i-1]['sheet'] = ABC_UPPER[s]
                 #dssp[res_j-1]['sheet'] = ABC_UPPER[s]
-                if (dssp[res_i-2].bridge_1 == NONE):
+                if (dssp[res_i-1].bridge_1 == NONE):
                     n += 1
                     if (n == 26): n = 0
-                if (dssp[res_i-1].bridge_1 == NONE):
-                    dssp[res_i-1].bridge_1 = ABC_LOWER[n]
-                    dssp[res_i-1].bp1 = res_j
+                if (dssp[res_i].bridge_1 == NONE):
+                    dssp[res_i].bridge_1 = ABC_LOWER[n]
+                    dssp[res_i].bp1 = res_j+1
                 else:
-                    dssp[res_i-1].bridge_2 = ABC_LOWER[n]
-                    dssp[res_i-1].bp2 = res_j
+                    dssp[res_i].bridge_2 = ABC_LOWER[n]
+                    dssp[res_i].bp2 = res_j+1
 
-                if (dssp[res_j-1].bridge_1 == NONE):
-                    dssp[res_j-1].bridge_1 = ABC_LOWER[n]
-                    dssp[res_j-1].bp1 = res_i
+                if (dssp[res_j].bridge_1 == NONE):
+                    dssp[res_j].bridge_1 = ABC_LOWER[n]
+                    dssp[res_j].bp1 = res_i+1
                 else:
-                    dssp[res_j-1].bridge_2 = ABC_LOWER[n]
-                    dssp[res_j-1].bp2 = res_i
-                if (dssp[res_i-1].bridge_2 != NONE):
+                    dssp[res_j].bridge_2 = ABC_LOWER[n]
+                    dssp[res_j].bp2 = res_i+1
+                if (dssp[res_i].bridge_2 != NONE):
                     s += 1
     setStrandsStructure(dssp)                    
     return(dssp)
