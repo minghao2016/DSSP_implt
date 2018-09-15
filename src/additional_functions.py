@@ -3,7 +3,7 @@ Documentation for this module.
 
 More details.
 """
-
+import os
 from optparse import OptionParser
 from subprocess import call
 import datetime as dt
@@ -24,11 +24,12 @@ def argsParsing():
     """
     parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
     parser.add_option("-i", "--input", dest='input', metavar="FILE",
-        help="The file name of a PDB formatted file containing the protein structure data.")
+        help="the file name of a PDB formatted file containing the protein structure data")
     parser.add_option("-o", "--output", dest='output', metavar="FILE",
-        help="The  file  name  of  a  DSSP  file to create.")
+        help="the  file  name  of  a  DSSP  file to create")
     (opt, args) = parser.parse_args()
-    if not opt.input: parser.error('Input pdb file not given.')
+    if not opt.input: parser.error('Input pdb file not given. Use the [-i FILE] option.')
+    if not os.path.isfile(opt.input): parser.error('Input file does not exist.')
     return(opt)
 
 def hydrAddition(opt):
@@ -83,18 +84,16 @@ def displayResults(opt,pdb,dssp):
     if (opt.output):
         with open(opt.output,'w') as filout:
             filout.write(header+descp+'\n')
-            for i in range(0,len(dssp)):
+            for i in range(len(dssp)):
                 l = dssp[i]
-                filout.write("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:1s}{:1s}{:1s}{:1s}{:1s}{:>4d}{:>4d}{:>8.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
-                .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn']['rlt'],l['4-turn']['rlt'],l['5-turn']['rlt'],l['bend'],\
-                    l['chirality'],l['bridge']['pi'],l['bridge']['pj'],l['BP1'],l['BP2'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+                filout.write("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>4d}{:>4d}{:>1s}{:>7.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
+                .format(r.index,r.resNum,r.chainID,r.resName,r.structure,r.turn3['rlt'],r.turn4['rlt'],r.turn5['rlt'],r.bend,r.chirality,r.bridge_1,r.bridge_2,r.bp1,r.bp2,r.sheet,\
+                    r.tco,r.kappa,r.alpha,r.phi,r.psi,r.CA[0],r.CA[1],r.CA[2]))
 
     else:
         print(header,descp,sep="")
         for i in range(len(dssp)):
-            l = dssp[i]
-            #print("{:>5d}{:>5d}{:>2s}{:>2s}{:>2s}{:>3s}{:>1s}{:>1s}"\
-            #    .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn'],l['4-turn'],l['5-turn']))
-            print("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:1s}{:1s}{:1s}{:1s}{:1s}{:1s}{:>4d}{:>4d}{:>8.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
-                .format(l['index'],l['res_nb'],l['chain'],l['aa'],l['structure'],l['3-turn']['rlt'],l['4-turn']['rlt'],l['5-turn']['rlt'],l['bend'],\
-                    l['chirality'],l['bridge']['pi'],l['bridge']['pj'],l['BP1'],l['BP2'],l['tco'],l['kappa'],l['alpha'],l['phi'],l['psi'],l['x-ca'],l['y-ca'],l['z-ca']))
+            r = dssp[i]
+            print("{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>4d}{:>4d}{:>1s}{:>7.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}"\
+                .format(r.index,r.resNum,r.chainID,r.resName,r.structure,r.nturns[3].result,r.nturns[4].result,r.nturns[5].result,r.bend,r.chirality,r.bridge_1,r.bridge_2,r.bp1,r.bp2,r.sheet,\
+                    r.tco,r.kappa,r.alpha,r.phi,r.psi,r.CA[0],r.CA[1],r.CA[2]))

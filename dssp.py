@@ -5,18 +5,16 @@ __author__ = "Hélène Kabbech"
 import sys
 import os
 
-# Implemented modules in /src foler :
-sys.path.append(os.path.abspath('src'))
-from calculation import *
-from structure import *
-from additional_functions import *
-
 # Biopython modules used :
 from Bio.SeqUtils import seq1
 from Bio.PDB import *
 
-
-NONE = ' '
+# Implemented modules in /src foler :
+sys.path.append(os.path.abspath('src'))
+#from calculation import *
+from structure import *
+from additional_functions import *
+import classes
 
 if __name__ == "__main__":
     opt = argsParsing()
@@ -24,6 +22,7 @@ if __name__ == "__main__":
 
     p = PDBParser(QUIET=True) # QUIET=T : Warnings issued are suppressed
     pdb = p.get_structure(opt.input,opt.input+".H")
+    #pdb = p.get_structure("1BTA","data/1bta.pdb.H")
 
     dssp = []
     index,    nb_chains = 0, 0
@@ -37,32 +36,17 @@ if __name__ == "__main__":
             if (res.get_id()[0] != NONE):
                 break
             last = res.get_id()[1]
-
-        for res in range(first,last+1):
+        for resNum in range(first,last+1):
             index += 1
-            l = {}
-            l['index'] = index
-            l['res_nb'] = res
-            l['chain'] = chain.id
-            l['aa'] = seq1(chain[res].get_resname())
-            l['structure'] = NONE
-            for n in [5,4,3]:
-                l[str(n)+'-turn'] = {'start':NONE,'middle':NONE,'end':NONE,'rlt':NONE}
-            l['bridge'] = {'pi':'','pj':'','api':'','apj':''}
-            l['BP1'], l['BP2'] = 0, 0
-            l['sheet'] = NONE
-            l['tco'] = TCOCalc(chain,res)
-            l['kappa'] = kappaCalc(chain,res)
-            l['bend'] = NONE
-            l['alpha'] = alphaCalc(chain,res)
-            l['chirality'] = chirality(l['alpha'])
-            l['psi'] = psiCalc(chain,res)
-            l['phi'] = phiCalc(chain,res)
-            l['x-ca'] = chain[res]['CA'].get_coord()[0]
-            l['y-ca'] = chain[res]['CA'].get_coord()[1]
-            l['z-ca'] = chain[res]['CA'].get_coord()[2]
-            dssp.append(l)
+            r = classes.Residue(chain, index, chain.id, resNum)
+            r.tco_calculation(chain)
+            r.kappa_calculation(chain)
+            r.alpha_calculation(chain)
+            r.chirality_assignation()
+            r.phi_calculation(chain)
+            r.psi_calculation(chain)
+            dssp.append(r)
 
-    dssp = foundHelices(dssp,chain)
-    dssp = foundStrands(dssp,chain)
+    dssp = foundHelices(dssp)
+    dssp = foundStrands(dssp)
     displayResults(opt,pdb,dssp)
