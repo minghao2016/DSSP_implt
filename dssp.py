@@ -10,22 +10,19 @@ from Bio.PDB import *
 
 # Implemented modules in /src foler :
 sys.path.append(os.path.abspath('src'))
-#from calculation import *
 from structure import *
 from additional_functions import *
 import classes
 
 if __name__ == "__main__":
     opt = argsParsing()
-    hydrAddition(opt)
-
+    hydrAddition(opt.input)
     p = PDBParser(QUIET=True) # QUIET=T : Warnings issued are suppressed
     pdb = p.get_structure(opt.input,opt.input+".H")
     #pdb = p.get_structure("1BTA","data/1bta.pdb.H")
 
     dssp = []
     index,    nb_chains = 0, 0
-
     for chain in pdb.get_chains():
         nb_chains += 1
         # first residue id number of the current chain
@@ -35,6 +32,7 @@ if __name__ == "__main__":
             if (res.get_id()[0] != NONE):
                 break
             last = res.get_id()[1]
+
         for resNum in range(first,last+1):
             index += 1
             r = classes.Residue(chain, index, chain.id, resNum)
