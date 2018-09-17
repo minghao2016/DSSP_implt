@@ -37,7 +37,7 @@ def lineHeader(dic):
     return(l)
 
 def makeHeader(pdb):
-    """Make and return the header of the dssp output using data from the pdb file"""
+    """Make and return the header of the resList output using data from the pdb file"""
     header = "==== Secondary Structure Assignment using DSSP method ====\nDATE\t\t{}\n".format(dt.date.today())
     header += "REFERENCE\tW. KABSCH AND C.SANDER, BIOPOLYMERS 22 (1983) 2577-2637\n"
     header += "HEADER\t\t{}{:>28}\n".format(pdb.header["head"].upper(),pdb.header["deposition_date"])
@@ -46,21 +46,21 @@ def makeHeader(pdb):
     header += "AUTHOR\t\t{}".format(pdb.header["author"].upper())
     return(header+"\n")
 
-def displayResults(opt,pdb,dssp):
+def displayResults(opt,pdb,resList):
     """ """
     header = makeHeader(pdb)
     descp = "  #  RESIDUE AA STRUCTURE BP1 BP2    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA"
-    #    print("  #  RESIDUE AA STRUCTURE BP1 BP2  ACC     N-H-->O    O-->H-N    N-H-->O    O-->H-N    TCO  KAPPA ALPHA  PHI   PSI    X-CA   Y-CA   Z-CA            CHAIN")
+
     # Results save in an output file :
     if (opt.output):
         f = open(opt.output,'w')
         f.write(header+descp+'\n')
-    # Or they are displayed in the terminal :
+    # Or they are displayed on the terminal :
     else:
         print(header,descp,sep='')
 
-    for i in range(len(dssp)): 
-        r = dssp[i] # A Residue object
+    for i in range(len(resList)): 
+        r = resList[i] # A Residue (instance of the Residue class)
         line = "{:>5d}{:>5d}{:>2s}{:>2s}{:>3s}{:>2s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>1s}{:>4d}{:>4d}{:>1s}{:>7.3f}{:>6.1f}{:>6.1f}{:>6.1f}{:>6.1f}{:>7.1f}{:>7.1f}{:>7.1f}\n"\
                 .format(r.index,r.resNum,r.chainID,r.resName,r.structure,r.nturns[3].result,r.nturns[4].result,r.nturns[5].result,
                 r.bend,r.chirality,r.bridge_1,r.bridge_2,r.bp1,r.bp2,r.sheet,r.tco,r.kappa,r.alpha,r.phi,r.psi,r.CA[0],r.CA[1],r.CA[2])

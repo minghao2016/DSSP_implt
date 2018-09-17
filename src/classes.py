@@ -1,42 +1,35 @@
 """@package classes
 
-Residue class and its methods 
+Residue class and its methods to calculate supplement parameters
 """
 import numpy as np
 # Biopython :
 from Bio.PDB import *
 from Bio.SeqUtils import seq1
 
-
 NONE = ' '
 
 class Nturn:
+    """Class that regroups patterns of an nturn"""
     def __init__(self):
+        """The constructor of a Residue class."""
         self.start = NONE
         self.middle = NONE
         self.end = NONE
         self.result = NONE
 
-class BetaBridge:
-    def __init__(self):
-        self.c1 = ' '
-        self.c2 = ' '
-    def setType(Bridgetype):
-        self.type = bridgeType
-    def setC1(name):
-        self.c1 = c1
-    def setC2(name):
-        self.c2 = c2
-
 class Residue:
+    """Class that groups informations about a residue."""
     def __init__(self, chain, index, chainID, resNum):
+        """The constructor of a Residue class."""
         self.index = index
         self.chainID = chainID
         self.resNum = resNum
         self.resName = seq1(chain[resNum].get_resname())
-        self.structure = NONE
+        self.structure = NONE # 'H', 'B', 'E', 'G', 'I', 'T', 'S' or ' '
         self.nturns = { 3: Nturn(), 4: Nturn(), 5: Nturn() }
         self.bend = NONE
+        self.chirality = NONE 
         self.bridge_1 = NONE
         self.bridge_2 = NONE
         self.bp1 = 0
@@ -45,7 +38,6 @@ class Residue:
         self.tco = 0
         self.kappa = 360
         self.alpha = 360
-        self.chirality = NONE
         self.phi = 360
         self.psi = 360
         self.CA = chain[self.resNum]['CA'].get_vector()
@@ -84,6 +76,9 @@ class Residue:
                 self.kappa = np.arctan2(skap,ckap) * (180/(4 * np.arctan(1.0)))
         except:
             pass
+    def bend_assignation(self):
+        if (self.kappa != 360 and self.kappa > 70):
+            self.bend = 'S'
 
     def alpha_calculation(self,chain):
         """Dihedral angle alpha of the residue."""
@@ -115,6 +110,7 @@ class Residue:
         """Dihedral angle phi of the residue."""
         try:
             Cp = chain[self.resNum-1]['C'].get_vector()
+            # degree = (radian*180)/pi
             self.phi = (calc_dihedral(Cp, self.N.get_vector(), self.CA, self.C.get_vector())*180) / np.pi
         except:
             pass
