@@ -1,15 +1,18 @@
 # DSSP implementation
-Secondary Structure Assignment using the DSSP method.
+Secondary Structure Assignment using the DSSP method (see Reference).
 
 ## Installation
 ### Requirements
 - Python 3.6
-- Biopython package (for the Bio.SeqUtils and Bio.PDBmath modules)
+- Biopython package
+```shell
+pip install biopython
+```
 
 ### Clone the repository
 ```shell
-git clone https://github.com/kabhel/DSSP_implmt.git
-cd DSSP_implmt
+git clone https://github.com/kabhel/DSSP_implt.git
+cd DSSP_implt
 ```
 ## Run the program
 ### Examples
