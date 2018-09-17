@@ -71,9 +71,9 @@ class Residue:
             p2 = nnCA - self.CA
             x = np.dot(p1,p1) * np.dot(p2,p2)
             if (x > 0):
-                ckap = np.dot(p1,p2) / np.sqrt(x)
-                skap = np.sqrt(1 - ckap * ckap)
-                self.kappa = np.arctan2(skap,ckap) * (180/(4 * np.arctan(1.0)))
+                a = np.dot(p1,p2) / np.sqrt(x)
+                b = np.sqrt(1 - a * a)
+                self.kappa = np.arctan2(b,a) * (180 / (4 * np.arctan(1.0)))
         except:
             pass
     def bend_assignation(self):

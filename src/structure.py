@@ -1,8 +1,13 @@
 """@package structure
 
 Secondary structures assignment
-4-helices (H) -> isolated beta-bridge (B) -> beta-strands (E) -> 3-helices (G)
--> 5-helices (I) -> n-turns (T) -> bends (S)
+    1. 4-helices (H)
+    2. isolated beta-bridge (B)
+    3. beta-strands (E)
+    4. 3-helices (G)
+    5. 5-helices (I)
+    6. n-turns (T)
+    7.bends (S)
 """
 
 ############################## V A R I A B L E S ###############################
@@ -14,7 +19,7 @@ END = '<'
 START_END = 'X'
 MIDDLE = { 3: '3', 4: '4', 5: '5' }
 
-# Secondary structural patterns :
+# Secondary structure patterns :
 HELIX = { 3: 'G', 4: 'H', 5: 'I' }
 STRAND = 'E'
 TURN = 'T'
@@ -53,7 +58,8 @@ def isHbond(ri,rj):
 ######################## N T U R N S  &  H E L I C E S #########################
 
 def isHelix(resList,i,n):
-    """Test if residue i forms an n-helice with residue i+1. Return a boolean."""
+    """Test if residue i and i+1 are each bonded to an Hydrogen.
+    -> Residues i to i+1+n form an n-helix. Return a boolean."""
     try:
         if (isHbond(resList[i],resList[i+n]) == True and isHbond(resList[i+1],resList[i+1+n]) == True):
             return(True)
@@ -62,40 +68,44 @@ def isHelix(resList,i,n):
         return(False)
 
 def setNturnPatternResult(resList,res,n):
+    """n-turn pattern determination of a residue"""
     if (resList[res].nturns[n].end == END):
+        # '>' + '[3,4,5]' + '<' = 'X' (start & end)
         if (resList[res].nturns[n].start == START):
-            # '>' + '[3,4,5]' + '<' = 'X' (start & end)
             resList[res].nturns[n].result = START_END
+        # ' ' + '<' = '<' (end)
         else:
-            # ' ' + '<' = '<' (end)
             resList[res].nturns[n].result = END
     else:
+        # '>' + ' ' = '>' (start)
         if (resList[res].nturns[n].start == START):
-            # '>' + ' ' = '>' (start)
             resList[res].nturns[n].result = START
         else:
+            # (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
             if (resList[res].nturns[n].middle != NONE):
-                # (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
                 resList[res].nturns[n].result = MIDDLE[n]
     return(resList)
 
 def setHelixStruct(resList,n):
-    """ """
+    """Assignment of n-helix to all concerned residues"""
     for res in range(len(resList)):
+        # Secondary structure already determined. There is no overwrite
         if (resList[res].structure != NONE): continue
         if (resList[res].nturns[n].result == START):
+            # Start and end patterns are not include in the helix structure
             while (resList[res+2].nturns[n].result != NONE):
                 res += 1
-                if (resList[res].structure == NONE):
+                if (resList[res].structure == NONE): # no overwrite
                     resList[res].structure = HELIX[n]
     return(resList)
 
 def setNturnsStruct(resList):
-    """ """
+    """Assignment of turns (3, 4 and 5 types) to all concerned residues"""
     for n in [5,4,3]:
         for res in range(len(resList)):
+            # Start and end patterns are not include
             if (resList[res].nturns[n].result == START):
-                while (resList[res+1].structure != NONE): res += 1
+                while (resList[res+1].structure != NONE): res += 1 # no overwrite
                 while (resList[res+2].nturns[n].result != NONE):
                     res += 1
                     if (resList[res].structure == NONE):
@@ -103,33 +113,35 @@ def setNturnsStruct(resList):
     return(resList)
 
 def foundHelices(resList,n):
-    """Found all the n-helices and put the structure element"""
+    """Found all n-helices (3, 4 or 5 type) and assign the structural element (G, H or I)"""
     for res in range(0,len(resList)):
-        if (resList[res].structure != NONE): continue
+        if (resList[res].structure != NONE): continue # no overwrite
         if (isHelix(resList,res,n)):
+            # start (>>) and end (<<) pattern positioning :
             for i in range(0,2):
-                # helix start : res(i):'>' & res(i+1):'>'
                 resList[res+i].nturns[n].start = START
-                # helix end : res(i+n):'<' & res(i+n+1):'<'
                 resList[res+n+i].nturns[n].end =  END
+            # middle patterns positioning [3-helix (3), 4-helix (44) or 5-helix (555)] :
             for i in range(2,n):
-                # helix middle : res(i+2):'[3,4,5]' & res(i+3):'[4,5]' & res(i+4):'[5]'
                 resList[res+i].nturns[n].middle =  MIDDLE[n]
         setNturnPatternResult(resList,res,n)
-
     setHelixStruct(resList,n)
     return(resList)
 
 def foundNturns(resList):
-    for res in range(len(resList)-5):
-        for n in [3,4,5]:
-            if (isHbond(resList[res],resList[res+n]) == True):
-                resList[res].nturns[n].start = START
-                resList[res+n].nturns[n].end =  END
-                for i in range(1,n):
-                    resList[res+i].nturns[n].middle =  MIDDLE[n]
+    """Found all n-turns (3, 4 and 5 types) and assign the structural element (T)"""
     for res in range(len(resList)):
         for n in [3,4,5]:
+            try:
+                if (isHbond(resList[res],resList[res+n]) == True):
+                    # start (>) and end (<) pattern positioning :
+                    resList[res].nturns[n].start = START
+                    resList[res+n].nturns[n].end =  END
+                    # middle pattern positioning [3-helix (33), 4-helix (444) or 5-helix (5555)] :
+                    for i in range(1,n):
+                        resList[res+i].nturns[n].middle =  MIDDLE[n]
+            except:
+                pass
             setNturnPatternResult(resList,res,n)
     setNturnsStruct(resList)
     return(resList)
@@ -156,10 +168,10 @@ def isAntiparallelBridge(resList,i,j):
     except:
         return(False)
 
-def setIsolatedBridgeAndStrandStruct(resList):
-    """   """
+def setBridgesStruct(resList):
+    """Assignment of isolated beta-bridges and then beta-strands to all concerned residues."""
     for res in range(1,len(resList)-1):
-        if (resList[res].structure != NONE): continue
+        if (resList[res].structure != NONE): continue  # no overwrite
         if ((resList[res].bp1+resList[res].bp2) != 0):
             # Isolated Beta-bridge :
             if (resList[res-1].bp1+resList[res-1].bp2 == 0 and resList[res+1].bp1+resList[res+1].bp2 == 0):
@@ -169,20 +181,21 @@ def setIsolatedBridgeAndStrandStruct(resList):
             elif (resList[res-1].bp1+resList[res-1].bp2 != 0 or resList[res+1].bp1+resList[res+1].bp2 != 0):
                 resList[res].structure = STRAND
         else:
-            # Surrounded by strands :
+            # Surrounded by strands = Considered as a strand :
             if (resList[res-1].bp1+resList[res-1].bp2 != 0 and resList[res+1].bp1+resList[res+1].bp2 != 0\
                 and resList[res-2].bp1+resList[res-2].bp2 != 0 and resList[res+2].bp1+resList[res+2].bp2 != 0):
                 resList[res].structure = STRAND
     return(resList)
 
-def foundStrands(resList):
-    """ """
+def foundBridges(resList):
+    """Found all parallel and antiparallel bridges and assign the structural element
+    for isolated beta-bridges (B) and extended strands (E)."""
     n = -1
     newStrand = True
     for res_i in range(len(resList)):
-        if (resList[res_i].structure != NONE): continue
+        if (resList[res_i].structure != NONE): continue  # no overwrite
         for res_j in range(res_i+2,len(resList)):
-            if (resList[res_j].structure != NONE): continue
+            if (resList[res_j].structure != NONE): continue  # no overwrite
             if (isParallelBridge(resList,res_i,res_j) == True or isAntiparallelBridge(resList,res_i,res_j) == True):
                 if (isParallelBridge(resList,res_i,res_j) == True):
                     alphabet = ABC_LOWER
@@ -210,15 +223,15 @@ def foundStrands(resList):
                     resList[res_i].bridge_2 = alphabet[n]
                 resList[res_j].bp1 = res_i+1
                 resList[res_j].bridge_1 = alphabet[n]
-    resList=setIsolatedBridgeAndStrandStruct(resList)
+    setBridgesStruct(resList)
     return(resList)
 
 ################################## B E N D S ###################################
 
 def setBendStruct(resList):
-    """ """
+    """Assignment of bends to all concerned residues"""
     for res in range(len(resList)):
-        if (resList[res].structure != NONE): continue
+        if (resList[res].structure != NONE): continue # no overwrite
         if (resList[res].bend != NONE):
             resList[res].structure = BEND
     return(resList)
@@ -228,10 +241,15 @@ def setBendStruct(resList):
 
 def setSSE(resList):
     """Assignment of secondary structure elements in this order :
-    4-helices (H) -> isolated beta-bridge (B) -> beta-strands (E) -> 3-helices (G)
-    -> 5-helices (I) -> n-turns (T) -> bends (S)"""
+        1. 4-helices (H)
+        2. isolated beta-bridge (B)
+        3. beta-strands (E)
+        4. 3-helices (G)
+        5. 5-helices (I)
+        6. n-turns (T)
+        7.bends (S)"""
     foundHelices(resList,4) # alpha-helices
-    foundStrands(resList)
+    foundBridges(resList)
     foundHelices(resList,3) # 3_10-helices
     foundHelices(resList,5) # pi-helices
     foundNturns(resList)
