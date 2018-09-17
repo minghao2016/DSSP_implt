@@ -1,4 +1,10 @@
+"""@package classes
+
+Residue class and its methods 
+"""
 import numpy as np
+# Biopython :
+from Bio.PDB import *
 from Bio.SeqUtils import seq1
 
 
@@ -10,6 +16,17 @@ class Nturn:
         self.middle = NONE
         self.end = NONE
         self.result = NONE
+
+class BetaBridge:
+    def __init__(self):
+        self.c1 = ' '
+        self.c2 = ' '
+    def setType(Bridgetype):
+        self.type = bridgeType
+    def setC1(name):
+        self.c1 = c1
+    def setC2(name):
+        self.c2 = c2
 
 class Residue:
     def __init__(self, chain, index, chainID, resNum):
@@ -56,9 +73,15 @@ class Residue:
     def kappa_calculation(self,chain):
         """KAPPA angle of the residue."""
         try:
-            CApp = chain[self.resNum-2]['CA'].get_vector()
-            CAnn = chain[self.resNum+2]['CA'].get_vector()
-            self.kappa = 0
+            ppCA = chain[self.resNum-2]['CA'].get_vector()
+            nnCA = chain[self.resNum+2]['CA'].get_vector()
+            p1 = self.CA - ppCA
+            p2 = nnCA - self.CA
+            x = np.dot(p1,p1) * np.dot(p2,p2)
+            if (x > 0):
+                ckap = np.dot(p1,p2) / np.sqrt(x)
+                skap = np.sqrt(1 - ckap * ckap)
+                self.kappa = np.arctan2(skap,ckap) * (180/(4 * np.arctan(1.0)))
         except:
             pass
 

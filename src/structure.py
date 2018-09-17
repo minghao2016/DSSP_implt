@@ -23,6 +23,8 @@ MIDDLE = { 3: '3', 4: '4', 5: '5' }
 HELIX = { 3: 'G', 4: 'H', 5: 'I' }
 STRAND = 'E'
 TURN = 'T'
+BRIDGE = 'B'
+BEND = 'S'
 
 # Alphabet :
 ABC_LOWER, ABC_UPPER = [], []
@@ -63,56 +65,6 @@ def isHelix(dssp,i,n):
     except:
         return(False)
 
-def setHelicesStructure(dssp):
-    """ """
-    for n in [5,4,3]:
-        for res in range(len(dssp)):
-            if (dssp[res].nturns[n].result == START):
-                while (dssp[res+2].nturns[n].result != NONE):
-                    res += 1
-                    if (dssp[res].structure == NONE):
-                        dssp[res].structure = HELIX[n]
-    return(dssp)
-
-def foundHelices(dssp):
-    """
-    Helix patterns :
-    3-helix : >>3<<
-    4-helix : >>44<<
-    5-helix : >>555<<
-    """
-    for res in range(0,len(dssp)-2):
-        # n-Helix, with n = [3,4,5]
-        for n in [5,4,3]:
-            if (isHelix(dssp,res,n)):
-                for i in range(0,2):
-                    # helix start : res(i):'>' & res(i+1):'>'
-                    dssp[res+i].nturns[n].start = START
-                    # helix end : res(i+n):'<' & res(i+n+1):'<'
-                    dssp[res+n+i].nturns[n].end =  END
-                for i in range(2,n):
-                    # helix middle : res(i+2):'[3,4,5]' & res(i+3):'[4,5]' & res(i+4):'[5]'
-                    dssp[res+i].nturns[n].middle =  MIDDLE[n]
-
-            if (dssp[res].nturns[n].end == END):
-                if (dssp[res].nturns[n].start == START):
-                    # '>' + '[3,4,5]' + '<' = 'X' (start & end)
-                    dssp[res].nturns[n].result = START_END
-                else:
-                    # ' ' + '<' = '<' (end)
-                    dssp[res].nturns[n].result = END
-            else:
-                if (dssp[res].nturns[n].start == START):
-                    # '>' + ' ' = '>' (start)
-                    dssp[res].nturns[n].result = START
-                else:
-                    if (dssp[res].nturns[n].middle != NONE):
-                        # (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
-                        dssp[res].nturns[n].result = MIDDLE[n]
-
-    setHelicesStructure(dssp)
-    return(dssp)
-
 def isParallelBridge(dssp,i,j):
     try:
         if ((isHbond(dssp[i-1],dssp[j]) == True and isHbond(dssp[j],dssp[i+1]) == True)\
@@ -131,19 +83,91 @@ def isAntiparallelBridge(dssp,i,j):
     except:
         return(False)
 
-def setStrandsStructure(dssp):
+def setHelixStruct(dssp,n):
+    """ """
+    for res in range(len(dssp)):
+        if (dssp[res].structure != NONE): continue
+        if (dssp[res].nturns[n].result == START):
+            while (dssp[res+2].nturns[n].result != NONE):
+                res += 1
+                if (dssp[res].structure == NONE):
+                    dssp[res].structure = HELIX[n]
+    return(dssp)
+
+def setIsolatedBridgeStruct(dssp):
     for res in range(1,len(dssp)-1):
-        if ((dssp[res].bridge_1+dssp[res].bridge_2) != NONE+NONE):
-            if (dssp[res-1].bridge_1+dssp[res-1].bridge_2 != NONE+NONE or dssp[res+1].bridge_1+dssp[res+1].bridge_2 != NONE+NONE):
+        if (dssp[res].structure != NONE): continue
+        if ((dssp[res].bp1+dssp[res].bp2) != 0):
+            if (dssp[res-1].bp1+dssp[res-1].bp2 == 0 and dssp[res+1].bp1+dssp[res+1].bp2 == 0):
+                dssp[res].structure = BRIDGE
+                dssp[dssp[res].bp1-1].structure = BRIDGE
+    return(dssp)
+
+def setStrandStruct(dssp):
+    for res in range(1,len(dssp)-1):
+        if (dssp[res].structure != NONE): continue
+        if ((dssp[res].bp1+dssp[res].bp2) != 0):
+            if (dssp[res-1].bp1+dssp[res-1].bp2 != 0 or dssp[res+1].bp1+dssp[res+1].bp2 != 0):
                 dssp[res].structure = STRAND
         else:
-            if (dssp[res-1].bridge_1+dssp[res-1].bridge_2 != NONE+NONE and dssp[res+1].bridge_1+dssp[res+1].bridge_2 != NONE+NONE\
-                and (dssp[res-2].bridge_1+dssp[res-2].bridge_2 != NONE+NONE or dssp[res+2].bridge_1+dssp[res+2].bridge_2 != NONE+NONE)):
+            if (dssp[res-1].bp1+dssp[res-1].bp2 != 0 and dssp[res+1].bp1+dssp[res+1].bp2 != 0\
+                and dssp[res-2].bp1+dssp[res-2].bp2 != 0 and dssp[res+2].bp1+dssp[res+2].bp2 != 0):
                 dssp[res].structure = STRAND
+    return(dssp)
+
+def setNturnsStruct(dssp):
+    """ """
+    for n in [5,4,3]:
+        for res in range(len(dssp)):
+            if (dssp[res].nturns[n].result == START):
+                while (dssp[res+1].structure != NONE): res += 1
+                while (dssp[res+2].nturns[n].result != NONE):
+                    res += 1
+                    if (dssp[res].structure == NONE):
+                        dssp[res].structure = TURN
+    return(dssp)
+
+def foundHelices(dssp,n):
+    """
+    Helix patterns :
+    3-helix : >>3<<
+    4-helix : >>44<<
+    5-helix : >>555<<
+    """
+    for res in range(0,len(dssp)):
+        if (dssp[res].structure != NONE): continue
+        if (isHelix(dssp,res,n)):
+            for i in range(0,2):
+                # helix start : res(i):'>' & res(i+1):'>'
+                dssp[res+i].nturns[n].start = START
+                # helix end : res(i+n):'<' & res(i+n+1):'<'
+                dssp[res+n+i].nturns[n].end =  END
+            for i in range(2,n):
+                # helix middle : res(i+2):'[3,4,5]' & res(i+3):'[4,5]' & res(i+4):'[5]'
+                dssp[res+i].nturns[n].middle =  MIDDLE[n]
+
+        if (dssp[res].nturns[n].end == END):
+            if (dssp[res].nturns[n].start == START):
+                # '>' + '[3,4,5]' + '<' = 'X' (start & end)
+                dssp[res].nturns[n].result = START_END
+            else:
+                # ' ' + '<' = '<' (end)
+                dssp[res].nturns[n].result = END
+        else:
+            if (dssp[res].nturns[n].start == START):
+                # '>' + ' ' = '>' (start)
+                dssp[res].nturns[n].result = START
+            else:
+                if (dssp[res].nturns[n].middle != NONE):
+                    # (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
+                    dssp[res].nturns[n].result = MIDDLE[n]
+
+    setHelixStruct(dssp,n)
     return(dssp)
 
 def foundStrands(dssp):
     n = -1
+    newStrand = True
     for res_i in range(len(dssp)):
         if (dssp[res_i].structure != NONE): continue
         for res_j in range(res_i+2,len(dssp)):
@@ -151,11 +175,18 @@ def foundStrands(dssp):
             if (isParallelBridge(dssp,res_i,res_j) == True or isAntiparallelBridge(dssp,res_i,res_j) == True):
                 if (isParallelBridge(dssp,res_i,res_j) == True):
                     alphabet = ABC_LOWER
+                    if (dssp[res_i-1].bp1 == 0 or dssp[res_i-1].bp1+1 != res_j+1):
+                        newStrand = True
+                    else:
+                        newStrand = False
                 elif (isAntiparallelBridge(dssp,res_i,res_j) == True):
                     alphabet = ABC_UPPER
-
+                    if (dssp[res_i-1].bp1 == 0 or dssp[res_i-1].bp1-1 != res_j+1):
+                        newStrand = True
+                    else:
+                        newStrand = False
                 if (dssp[res_i+1].bp1 == 0 and dssp[res_i-1].bp2 == 0):
-                    if (dssp[res_i-1].bp1 == 0):
+                    if (newStrand == True):
                         n += 1
                         if (n == 26): n = 0
                     dssp[res_i].bp1 = res_j+1
@@ -168,32 +199,20 @@ def foundStrands(dssp):
                     dssp[res_i].bridge_2 = alphabet[n]
                 dssp[res_j].bp1 = res_i+1
                 dssp[res_j].bridge_1 = alphabet[n]
-    setStrandsStructure(dssp)                    
+    dssp=setIsolatedBridgeStruct(dssp)
+    dssp=setStrandStruct(dssp)
     return(dssp)
-
-def setNturnsStructure(dssp):
-    """ """
-    for n in [5,4,3]:
-        for res in range(len(dssp)):
-            if (dssp[res].structure != NONE): continue
-            if (dssp[res].nturns[n].result == START):
-                while (dssp[res+2].nturns[n].result != NONE):
-                    res += 1
-                    if (dssp[res].structure == NONE):
-                        dssp[res].structure = TURN
-    return(dssp)
-
-
 
 def foundNturns(dssp):
-    for res in range(0,len(dssp)-3):
-        if (dssp[res].structure != NONE): continue
-        for n in [5,4,3]:
+    for res in range(len(dssp)-5):
+        for n in [3,4,5]:
             if (isHbond(dssp[res],dssp[res+n]) == True):
                 dssp[res].nturns[n].start = START
                 dssp[res+n].nturns[n].end =  END
                 for i in range(1,n):
                     dssp[res+i].nturns[n].middle =  MIDDLE[n]
+    for res in range(len(dssp)):
+        for n in [3,4,5]:
             if (dssp[res].nturns[n].end == END):
                 if (dssp[res].nturns[n].start == START):
                     # '>' + '[3,4,5]' + '<' = 'X' (start & end)
@@ -209,5 +228,25 @@ def foundNturns(dssp):
                     if (dssp[res].nturns[n].middle != NONE):
                         # (' ' + ' ') and (middle != ' ') =  [3,4,5] (middle)
                         dssp[res].nturns[n].result = MIDDLE[n]
-    setNturnsStructure(dssp)
+    setNturnsStruct(dssp)
+    return(dssp)
+
+def foundAndSetBend(dssp):
+    for res in range(len(dssp)):
+        if (dssp[res].kappa != 360 and dssp[res].kappa > 70):
+            dssp[res].bend = BEND
+            if (dssp[res].structure != NONE):
+                continue
+            else:
+                dssp[res].structure = BEND
+    return(dssp)
+
+def setSSE(dssp):
+    """ """
+    foundHelices(dssp,4)
+    foundStrands(dssp)
+    foundHelices(dssp,3)
+    foundHelices(dssp,5)
+    foundNturns(dssp)
+    foundAndSetBend(dssp)
     return(dssp)

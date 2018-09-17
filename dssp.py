@@ -1,4 +1,4 @@
-#!/home/helene/anaconda3/bin/python3.6
+#!/usr/bin/python3.6
 
 __author__ = "Hélène Kabbech"
 
@@ -44,7 +44,8 @@ if __name__ == "__main__":
             r.psi_calculation(chain)
             dssp.append(r)
 
-    dssp = foundHelices(dssp)
-    dssp = foundStrands(dssp)
-    dssp = foundNturns(dssp)
+    dssp = setSSE(dssp)
+    #dssp = foundHelices(dssp)
+    #dssp = foundStrands(dssp)
+    #dssp = foundNturns(dssp)
     displayResults(opt,pdb,dssp)
