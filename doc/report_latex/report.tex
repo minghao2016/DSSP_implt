@@ -8,7 +8,8 @@
 \usepackage{geometry}
 \usepackage{graphicx}
 \usepackage{epstopdf} %%package to overcome problem with eps in pdf files
-
+\usepackage{hyperref}
+\usepackage{unicode-math}
 \geometry{
 	a4paper,
 	total={170mm,257mm},
@@ -33,49 +34,83 @@
 \maketitle
 
 \section{Introduction}
-As Kabsch and Sander did in the 80's, the aim of this project is to generate a pattern-recognition program which assign secondary structures to a protein by using the dictionary of protein secondary structures based on hydrogen-bonded and geometrical features extracted from atomic coordinates.
+The purpose of this project is to generate a pattern-recognition program that assigns secondary structure elements (SSE) to a protein by using the dictionary of protein secondary structures (dssp)$^1$ fixed by Kabsch and Sander in the mid-80's. SSE are based on hydrogen-bonded and geometrical features extracted from atomic coordinates.
 
 \section{Material \& Method}
-\subsection{Programming}
-The programming script is written in Python 3.6. The BioPython library (reference) is used to manage pdb files. The script is separated into three modules : classes (Residue and Nturn), Structure, Additional\_functions
-GitHubMy project (documentation, script sources) is available online I used GitHub, a web-based hosting service for version control using Git
-method dssp / reduce program / GitHub\\
-In order to assign the secondary structure elements (SSE), we follow the strategy decribed in the article, which is priority \textbf{H} ($\alpha$-helix), \textbf{B} (isolated $\beta$-bridge), \textbf{E} (extended strand), \textbf{G} ($\textrm{3}_\textrm{10}$-helix), \textbf{I} ($\pi$-helix), \textbf{T} (H-bonded turn) and \textbf{S} (bend).  
+\subsection{Programming tools}
+All scripts are written in Python 3.6. PDB files are easily manage thanks to the BioPython$^2$ library. GitHub has been used for the development of this program. It is a web-based hosting service for version control using Git. Therefore, this project (its documentation and source code) is available online at the following address :  \url{https://www.github.com/kabhel/DSSP\_implt} 
 
-\subsection{Input files}
-Protein Data Bank files
-Reduce program (add reference) is used to add hydrogen coordinates into a pdb file.
+\subsection{Code structure}
+In addition to the main function (\textit{dssp.py} file), three modules are implemented : \textit{management} (Creation of the help, argument managment and display of results), \textit{classes} (Residue class and its methods to calculate supplement parameters) and \textit{structures} (Secondary structures assignment) (\textbf{see Figure 1}).
+\begin{figure}[h!]
+	\centering
+	\includegraphics[totalheight=3.5cm]{img/dssp_prog_schema.png}
+	\label{fig:verticalcell}
+\footnotesize\textbf{Figure 1.} Schema of the implemented dssp program that assigns secondary structures from a pdb file.
+\end{figure}
+
+\subsection{Secondary Structure Assignment}
+As Kabsch and Sander described in their paper$^1$, the implemented dssp program assigns the SSE according to a specific priority order. First $\alpha$-helices (\textbf{H}) are assign, follow by isolated $\beta$-bridges (\textbf{B}), extended strands (\textbf{E}), $\textrm{3}_\textrm{10}$-helices (\textbf{G}), $\pi$-helices (\textbf{I}), H-bonded turns \textbf{T} and then bend (\textbf{S}). The assignment of a SSE depends mainly on H-bonded features.
+
 \subsection{Output parameters}
-The program different parameters describe a residue (see \textbf{Annexe})\\
+Each line of a dssp output describes a residue and its assigned secondary structure (see dssp output \textbf{Annexe section}).\\
 \begin{itemize}
-	\item\textbf{RESIDUE :} Residue sequence number and chain identifier
+	\item\textbf{RESIDUE :} Residue sequence number and chain identifier.
 	\item\textbf{AA :} One letter amino acid code.
-	\item\textbf{STRUCTURE} (first column in STRUCTURE block) : Compromise summary of secondary structure, intended to approximate crystallographers' intuition, based on columns 19-38, which are the principal result of DSSP analysis of the atomic coordinates.
-	\item\textbf{BP1 BP2 :} Residue number of first and second bridge partner
-	\item\textbf{TCO :} Cosine of angle between C=O of residue i and C=O of residue i-1. For alpha-helices, TCO is near +1, for beta-sheets TCO is near -1. Not used for structure definition.
-	\item\textbf{KAPPA :} Virtual bond angle (bend angle) defined by the three C-alpha atoms of residues i-2, i, i+2. Used to define bend (structure code 'S').
-	\item\textbf{ALPHA :} Virtual torsion angle (dihedral angle) defined by the four C-alpha atoms of residues i-1, i, i+1, i+2. Used to define chirality (structure code '+' or '-').
-	\item\textbf{PHI PSI :} IUPAC peptide backbone torsion angles
-	\item\textbf{X-CA Y-CA Z-CA :} C-alpha atom coordinates
+	\item\textbf{STRUCTURE} :
+	\begin{itemize}
+		\item Secondary structure element : '\textbf{H}', '\textbf{B}', '\textbf{E}', '\textbf{G}', '\textbf{I}', '\textbf{T}', '\textbf{S}' or ' '
+		\item 3-turn/helix pattern : '\boldmath{$>$}' (start), '\textbf{$<$}' (end),  '\textbf{X}' (start/end), '\textbf{3}' (middle), or ' '
+		\item 4-turn/helix pattern : '\textbf{$>$}', '\textbf{X}', '\textbf{$<$}', '\textbf{4}', or ' '
+		\item 5-turn/helix pattern : '\textbf{$>$}', '\textbf{X}', '\textbf{$<$}', '\textbf{5}' or ' '
+		\item Geometrical bend : '\textbf{S}' or ' '
+		\item Chirality : '\textbf{+}' or '\textbf{-}'
+		\item Bridge label : '\textbf{a,b,c.}' for parallel $\beta$-bridge, '\textbf{A,B,C}.' for antiparallel $\beta$-bridge
+	\end{itemize}
+	\item\textbf{BP1 BP2 :} Residue number of first and second bridge partner.
+	\item\textbf{TCO :} Cosine of angle between C=O of residue i and C=O of residue i-1. TCO is near +1 for $\alpha$-helices, TCO is near -1 for $\beta$-sheets.
+	\item\textbf{KAPPA :} Virtual bond angle (bend angle) defined by the three C$_\alpha$ atoms of residues i-2, i, i+2. Used to define bend.
+	\item\textbf{ALPHA :} Virtual torsion angle (dihedral angle) defined by the C$_\alpha$ atoms of residues i-1, i, i+1 and i+2. Used to define chirality.
+	\item\textbf{PHI PSI :} Peptide backbone torsion angles (dihedral angles).
+	\item\textbf{X-CA Y-CA Z-CA :} C$_\alpha$ atom coordinates.
 \end{itemize}
 
-\subsection{Example}
-1bta, 1itv
+
+\subsection{Input data}
+The input file must be in PDB (Protein Data Bank) format. Our program is illustrate by two examples : 1BTA$^3$ the three-dimensional structure of barstar Secondly and 1ITV$^4$ the dimeric form of the haemopexin domain of MMP9 (see \textbf{Results section}).
 
 \section{Results}
-The dssp program is run with two example.
-First the 1BTA pdb file, then a more complex pdb 1ITV 
 
-\subsection{A simple example}
-1BTA is Its structure consist of a sheet (3 beta-strands parallels) and 4 alpha-helices.
-By comparing our result with the mkdssp program, we obtain the good result with a isolated beta-bridge
+\subsection{1BTA : A simple case}
+1BTA is a simple structure with four $\alpha$-helices and one $\beta$-sheet containing three parallel $\beta$-strands (see \textbf{Figure 2}). By comparing the dssp output (see \textbf{Annexe section}) with the original output (\textbf{dssp program 3.0.0}), we notice the same assignment of the secondary structures for each residues, except an isolated beta-bridge (at index 7 and 9) that is not determined by the original program.
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[totalheight=5cm]{img/1bta.png}
+	\label{fig:verticalcell}
+	\footnotesize\textbf{\\Figure 2.} Structure of 1BTA colored by secondary structure in PyMol$^5$.
+\end{figure}
+
+\subsection{1ITV : A more complex case}
+ 1ITV is a more complex example because it contains two chains. Each chain has four $\beta$-sheets of three/four antiparallel $\beta$-strands and five small helices of $\alpha$ and $\textrm{3}_\textrm{10}$ types (see \textbf{Figure 3}). As well as previously, the main secondary structures (helices and strands) are well assigned. However, there are some differences/mistakes at some points.
+ 
+ \begin{figure}[h!]
+ 	\centering
+ 	\includegraphics[totalheight=8cm]{img/1itv.png}
+ 	\label{fig:verticalcell}
+ 	\footnotesize\textbf{\\Figure 3.} Structure of 1ITV colored by secondary structure in PyMol$^5$.
+ \end{figure}
 \section{Conclusion}
-We worked hard, and achieved very little.
-\clearpage
-\bibliographystyle{abbrv}
-\bibliography{main}
-W. Kabsch and C.Sander, Biopolymers 22 (1983) 2577-2637
-\\
+The dssp program implemented in python 3.6 performs almost similarly the original dssp program. It assigns secondary structure elements for each residues.
+
+\section{References}
+\begin{enumerate}
+	\item Kabsch, W., and C. Sander. "Secondary structure definition by the program DSSP." Biopolymers 22 (1983): 2577-2637.
+	\item Cock, Peter JA, et al. "Biopython: freely available Python tools for computational molecular biology and bioinformatics." Bioinformatics 25.11 (2009): 1422-1423.
+	\item Lubienski, Michael J., et al. "Three-dimensional solution structure and 13C assignments of barstar using nuclear magnetic resonance spectroscopy." Biochemistry 33.30 (1994): 8866-8877.
+	\item Cha, Hyunju, et al. "Structural basis of the adaptive molecular recognition by MMP9." Journal of molecular biology 320.5 (2002): 1065-1079.
+	\item DeLano, Warren Lyford. "PyMOL." (2002): 700.
+\end{enumerate}
 \begin{figure}[h!]
 	\centering
 	\includegraphics[totalheight=8cm]{img/pedromics.png}
