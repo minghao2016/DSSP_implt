@@ -1,6 +1,6 @@
 """@package classes
 
-Residue class and its methods to calculate supplement parameters
+Residue class and its methods to calculate supplement parameters.
 """
 import numpy as np
 # Biopython :
