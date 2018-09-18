@@ -7,8 +7,8 @@ import os
 
 # Implemented modules in /src foler :
 sys.path.append(os.path.abspath('src'))
-from structure import *
-from additional_functions import *
+from management import *
+from structures import *
 import classes
 
 # Biopython :
@@ -47,5 +47,5 @@ if __name__ == "__main__":
             r.psi_calculation(chain)
             resList.append(r)
 
-    resList = setSSE(resList)
+    resList = SSassignment(resList)
     displayResults(opt,pdb,resList)
