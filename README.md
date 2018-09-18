@@ -13,6 +13,7 @@ pip install biopython
 ```shell
 git clone https://github.com/kabhel/DSSP_implt.git
 cd DSSP_implt
+chmod +x dssp.py
 ```
 ## Run the program
 ### Examples
